@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#121214">
+    <meta name="description" content="Fast, responsive, and modern M3U / M3U8 Playlist Maker and Editor. Import links, reorder tracks, customize metadata, and export playlists easily on any device.">
+    <title>M3U8 Playlist Maker</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --vlc-orange: #ff8800;
+            --vlc-orange-hover: #ffa033;
+            --vlc-orange-active: #e67600;
+            --vlc-orange-glow: rgba(255, 136, 0, 0.28);
+            --vlc-orange-subtle: rgba(255, 136, 0, 0.12);
+            --bg-main: #0e0e11;
+            --card-bg: #18181c;
+            --card-subtle: #121215;
+            --border-color: #2a2a30;
+            --border-focus: #ff8800;
+            --text-primary: #f8f8fa;
+            --text-secondary: #9ea0a8;
+            --text-muted: #6b6d76;
+            --scrollbar-thumb: #34343d;
+            --scrollbar-thumb-hover: #ff8800;
+            --scrollbar-track: #121215;
+            --danger: #ef4444;
+            --danger-hover: #f87171;
+            --danger-subtle: rgba(239, 68, 68, 0.12);
+            --success: #10b981;
+            --success-subtle: rgba(16, 185, 129, 0.12);
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border-color);
+            --shadow-btn: 0 4px 14px rgba(255, 136, 0, 0.3);
+            --transition-speed: 0.18s;
+        }
+
+        /* Reset & Base */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 8px;
+            border: 2px solid var(--scrollbar-track);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+
+        body {
+            font-family: 'Lexend', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            line-height: 1.5;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0%, rgba(255, 136, 0, 0.07) 0%, transparent 60%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 8px 4px;
+        }
+
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: var(--vlc-orange-subtle);
+            border: 1px solid rgba(255, 136, 0, 0.25);
+            border-radius: 20px;
+            color: var(--vlc-orange);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 12px;
+        }
+
+        .logo-badge svg {
+            width: 15px;
+            height: 15px;
+            fill: currentColor;
+        }
+
+        h1 {
+            color: var(--text-primary);
+            font-size: clamp(1.6rem, 5vw, 2.2rem);
+            font-weight: 700;
+            letter-spacing: -0.6px;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: clamp(0.88rem, 2.8vw, 0.96rem);
+            font-weight: 400;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        /* Card Panels */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: clamp(16px, 4vw, 24px);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            transition: border-color var(--transition-speed);
+        }
+
+        .field-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.92rem;
+            color: var(--vlc-orange);
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.2px;
+        }
+
+        .field-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Links Input Area */
+        .editor-wrapper {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .links-textarea {
+            width: 100%;
+            min-height: 140px;
+            max-height: 280px;
+            resize: vertical;
+            padding: 14px;
+            background-color: var(--card-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'Lexend', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.95rem; /* >= 16px equivalent prevents iOS auto-zoom */
+            line-height: 1.6;
+            word-break: break-all;
+            outline: none;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .links-textarea:focus {
+            border-color: var(--vlc-orange);
+            box-shadow: 0 0 0 3px var(--vlc-orange-glow);
+            background-color: #151519;
+        }
+
+        .links-textarea.dragover {
+            border-color: var(--vlc-orange);
+            background-color: rgba(255, 136, 0, 0.09);
+            box-shadow: 0 0 0 3px var(--vlc-orange-glow);
+        }
+
+        .links-textarea::placeholder {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        /* Buttons & Actions */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 12px;
+        }
+
+        button {
+            font-family: 'Lexend', sans-serif;
+            border: none;
+            padding: 12px 18px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            user-select: none;
+            min-height: 44px; /* Touch target minimum */
+        }
+
+        button:active {
+            transform: scale(0.985);
+        }
+
+        .btn-primary {
+            background-color: var(--vlc-orange);
+            color: #0d0d10;
+            box-shadow: var(--shadow-btn);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--vlc-orange-hover);
+            box-shadow: 0 6px 18px rgba(255, 136, 0, 0.45);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            background-color: var(--vlc-orange-active);
+        }
+
+        .btn-secondary {
+            background-color: #24242b;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #2f2f38;
+            border-color: #3f3f4a;
+        }
+
+        /* File Input */
+        #playlist-file-input {
+            display: none;
+        }
+
+        /* Playlist Section */
+        #playlist-wrapper {
+            display: none;
+            margin-bottom: 20px;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .playlist-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 2px 10px 2px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .playlist-header-title {
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .count-badge {
+            background: var(--vlc-orange-subtle);
+            color: var(--vlc-orange);
+            font-size: 0.78rem;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 136, 0, 0.2);
+        }
+
+        .clear-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 32px;
+        }
+
+        .clear-btn:hover {
+            color: var(--danger-hover);
+            background-color: var(--danger-subtle);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        #playlist-container {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: clamp(10px, 3vw, 14px);
+            box-shadow: var(--shadow-card);
+        }
+
+        #playlist-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 440px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        /* Item Row */
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            background-color: #131317;
+            border: 1px solid #25252c;
+            border-radius: var(--radius-md);
+            padding: 8px 10px;
+            user-select: none;
+            gap: 8px;
+            transition: border-color var(--transition-speed), background-color var(--transition-speed), transform var(--transition-speed);
+            touch-action: pan-y;
+        }
+
+        .playlist-item:hover {
+            border-color: #3b3b45;
+            background-color: #17171d;
+        }
+
+        .playlist-item.dragging {
+            opacity: 0.4;
+            background-color: #272732;
+            border-color: var(--vlc-orange);
+            transform: scale(0.98);
+        }
+
+        .playlist-item.drag-target {
+            border-color: var(--vlc-orange);
+            box-shadow: 0 0 0 2px var(--vlc-orange-glow);
+        }
+
+        .playlist-item.highlight-duplicate {
+            animation: pulseHighlight 1.4s ease-out;
+        }
+
+        /* Drag handle & Mobile Reordering */
+        .item-actions-left {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--text-muted);
+            padding: 8px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            transition: color 0.15s;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .drag-handle:hover {
+            color: var(--vlc-orange);
+        }
+
+        .reorder-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .btn-order {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 3px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 20px;
+            min-height: auto;
+        }
+
+        .btn-order:hover {
+            color: var(--vlc-orange);
+            background-color: var(--vlc-orange-subtle);
+        }
+
+        .btn-order:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        /* Item Content */
+        .item-info {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            padding: 0 4px;
+        }
+
+        .item-title-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .item-title {
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .item-title.editable {
+            cursor: pointer;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .item-title.editable:hover {
+            color: var(--vlc-orange);
+            border-bottom-color: var(--vlc-orange);
+        }
+
+        .title-edit-input {
+            width: 100%;
+            background: #0d0d10;
+            border: 1px solid var(--vlc-orange);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+            padding: 2px 6px;
+            outline: none;
+        }
+
+        .item-url {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            margin-top: 2px;
+        }
+
+        /* Action Buttons Right */
+        .item-actions-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: auto;
+            width: 32px;
+            height: 32px;
+            transition: all 0.15s ease;
+        }
+
+        .icon-btn:hover {
+            color: var(--text-primary);
+            background-color: #26262e;
+        }
+
+        .icon-btn.delete-btn:hover {
+            color: var(--danger-hover);
+            background-color: var(--danger-subtle);
+        }
+
+        /* Playlist Name Group */
+        #playlist-name-group {
+            display: none;
+            margin-bottom: 14px;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .playlist-name-input {
+            width: 100%;
+            padding: 13px 15px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem; /* >= 16px to prevent zoom on iOS */
+            outline: none;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .playlist-name-input:focus {
+            border-color: var(--vlc-orange);
+            box-shadow: 0 0 0 3px var(--vlc-orange-glow);
+        }
+
+        .playlist-name-input.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+        }
+
+        /* Download Button */
+        #download-btn {
+            background-color: var(--vlc-orange);
+            color: #0d0d10;
+            padding: 14px 24px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            width: 100%;
+            display: none;
+            box-shadow: 0 6px 20px var(--vlc-orange-glow);
+            letter-spacing: 0.3px;
+        }
+
+        #download-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: max(24px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            pointer-events: none;
+            width: max-content;
+            max-width: min(92vw, 480px);
+        }
+
+        .toast {
+            background-color: #1a1a20;
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 9999px;
+            border: 1px solid var(--border-color);
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 8px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65);
+            pointer-events: auto;
+            animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .toast svg {
+            flex-shrink: 0;
+        }
+
+        .toast.success {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, #1a1a20 100%);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .toast.success span {
+            color: var(--text-primary);
+        }
+
+        .toast.error {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, #1a1a20 100%);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .toast.error span {
+            color: var(--text-primary);
+        }
+
+        .toast.info {
+            border-color: rgba(255, 136, 0, 0.5);
+            background: linear-gradient(180deg, rgba(255, 136, 0, 0.15) 0%, #1a1a20 100%);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(255, 136, 0, 0.2);
+            color: var(--vlc-orange);
+        }
+
+        .toast.info span {
+            color: var(--text-primary);
+        }
+
+        /* Confirmation Dialog Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: var(--shadow-card);
+            transform: scale(0.94);
+            transition: transform 0.2s ease;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-actions button {
+            padding: 9px 16px;
+            font-size: 0.88rem;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulseHighlight {
+            0% {
+                border-color: var(--vlc-orange);
+                box-shadow: 0 0 0 0 rgba(255, 136, 0, 0.7);
+                background-color: rgba(255, 136, 0, 0.15);
+            }
+            50% {
+                border-color: var(--vlc-orange);
+                box-shadow: 0 0 0 4px rgba(255, 136, 0, 0.45);
+                background-color: rgba(255, 136, 0, 0.08);
+            }
+            100% {
+                border-color: #25252c;
+                box-shadow: 0 0 0 0 rgba(255, 136, 0, 0);
+                background-color: #131317;
+            }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 580px) {
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+
+            .playlist-item {
+                padding: 10px 8px;
+            }
+
+            .playlist-header-row {
+                align-items: center;
+            }
+
+            .reorder-btns {
+                display: flex;
+            }
+        }
+
+        @media (pointer: coarse) {
+            /* On Touch Devices, make reorder & action buttons larger */
+            .btn-order {
+                width: 28px;
+                height: 24px;
+            }
+            .icon-btn {
+                width: 36px;
+                height: 36px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo-badge">
+            <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 11h2v4h-2zm0 6h2v2h-2z"/></svg>
+            VLC Compatible
+        </div>
+        <h1>M3U8 Playlist Maker</h1>
+        <p class="subtitle">Import video links, open existing playlists, reorder items, and export clean .m3u8 files for any device.</p>
+    </header>
+
+    <main>
+        <!-- Input Box -->
+        <section class="card" aria-labelledby="input-title">
+            <div class="field-label" id="input-title">
+                <span>Paste or Drop Links / M3U Files</span>
+                <span class="field-hint" id="links-count-hint">0 URLs ready</span>
+            </div>
+
+            <div class="editor-wrapper">
+                <textarea 
+                    id="links-editor" 
+                    class="links-textarea" 
+                    placeholder="Paste or drag & drop video links (http/https) or .m3u/.m3u8 files here..."
+                    aria-label="Video links or playlist file drop zone"
+                    spellcheck="false"
+                    rows="5"
+                ></textarea>
+            </div>
+            
+            <div class="btn-group">
+                <button type="button" class="btn-secondary" id="btn-open-file" title="Import an existing M3U/M3U8 playlist">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Open Playlist</span>
+                </button>
+                <button type="button" class="btn-primary" id="btn-add-links">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Add Links to Playlist</span>
+                </button>
+            </div>
+            <input type="file" id="playlist-file-input" accept=".m3u,.m3u8,.txt">
+        </section>
+
+        <!-- Playlist Section -->
+        <section id="playlist-wrapper" aria-labelledby="playlist-section-title">
+            <div class="playlist-header-row">
+                <h2 class="playlist-header-title" id="playlist-section-title">
+                    <span>Playlist Items</span>
+                    <span class="count-badge" id="playlist-count">0</span>
+                </h2>
+                <button type="button" class="clear-btn" id="btn-clear-all" title="Clear all tracks">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <span>Clear All</span>
+                </button>
+            </div>
+
+            <div id="playlist-container">
+                <div id="playlist-items" role="list"></div>
+            </div>
+        </section>
+
+        <!-- Playlist Name Field -->
+        <section id="playlist-name-group">
+            <label class="field-label" for="playlist-name-input">
+                <span>Playlist Name <span style="color:var(--danger)">*</span></span>
+                <span class="field-hint">Required for header & filename</span>
+            </label>
+            <input 
+                type="text" 
+                id="playlist-name-input" 
+                class="playlist-name-input" 
+                placeholder="e.g. My Favorite Series Season 1" 
+                maxlength="120"
+                autocomplete="off"
+            >
+        </section>
+
+        <!-- Download Action -->
+        <button type="button" id="download-btn" disabled>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Download M3U8 Playlist</span>
+        </button>
+    </main>
+</div>
+
+<!-- Modal Confirmation -->
+<div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+        <h3 class="modal-title" id="modal-title">Clear Playlist?</h3>
+        <p class="modal-body">This will remove all items from your current playlist. This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+            <button type="button" class="btn-danger" id="modal-confirm-btn">Clear Everything</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<script>
+    (function () {
+        'use strict';
+
+        // DOM Element Cache
+        const linksEditor = document.getElementById('links-editor');
+        const linksCountHint = document.getElementById('links-count-hint');
+        const btnOpenFile = document.getElementById('btn-open-file');
+        const btnAddLinks = document.getElementById('btn-add-links');
+        const playlistFileInput = document.getElementById('playlist-file-input');
+        const playlistWrapper = document.getElementById('playlist-wrapper');
+        const playlistItems = document.getElementById('playlist-items');
+        const playlistCount = document.getElementById('playlist-count');
+        const playlistNameGroup = document.getElementById('playlist-name-group');
+        const playlistNameInput = document.getElementById('playlist-name-input');
+        const downloadBtn = document.getElementById('download-btn');
+        const btnClearAll = document.getElementById('btn-clear-all');
+        const confirmModal = document.getElementById('confirm-modal');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const toastContainer = document.getElementById('toast-container');
+
+        // Drag State for reordering
+        let draggedItem = null;
+
+        // Toast Feedback System
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            let iconSvg = '';
+            if (type === 'error') {
+                iconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+            } else if (type === 'success') {
+                iconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+            } else {
+                iconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+            }
+
+            toast.innerHTML = `${iconSvg}<span>${escapeHtml(message)}</span>`;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px) scale(0.96)';
+                toast.style.transition = 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)';
+                setTimeout(() => toast.remove(), 200);
+            }, duration);
+        }
+
+        // URL normalization for consistent duplicate matching
+        function normalizeUrl(url) {
+            if (!url) return '';
+            try {
+                const parsed = new URL(url.trim());
+                return (parsed.origin + parsed.pathname).replace(/\/+$/, '').toLowerCase() + parsed.search;
+            } catch (e) {
+                return url.trim().replace(/\/+$/, '').toLowerCase();
+            }
+        }
+
+        // Flash/pulse animation on an existing playlist item when duplicate is detected
+        function highlightExistingItem(element) {
+            if (!element) return;
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            element.classList.remove('highlight-duplicate');
+            void element.offsetWidth; // trigger reflow
+            element.classList.add('highlight-duplicate');
+            setTimeout(() => {
+                element.classList.remove('highlight-duplicate');
+            }, 1500);
+        }
+
+        // Live Link Counter in Textarea with duplicate detection
+        function updateLinkHint() {
+            const text = linksEditor.value.trim();
+            if (!text) {
+                linksCountHint.textContent = '0 URLs ready';
+                return;
+            }
+            const urls = extractUrls(text);
+            const unique = new Set(urls.map(normalizeUrl));
+            const dups = urls.length - unique.size;
+            if (dups > 0) {
+                linksCountHint.textContent = `${urls.length} URLs (${dups} duplicate${dups === 1 ? '' : 's'})`;
+            } else {
+                linksCountHint.textContent = `${urls.length} URL${urls.length === 1 ? '' : 's'} ready`;
+            }
+        }
+
+        linksEditor.addEventListener('input', updateLinkHint);
+
+        // Extract Links from any messy text (whitespace, commas, quotes, linebreaks)
+        function extractUrls(text) {
+            if (!text) return [];
+            // Match any standard url or tokens
+            const rawTokens = text.split(/[\s,]+/);
+            const urls = [];
+
+            for (let token of rawTokens) {
+                token = token.trim().replace(/^["']|["']$/g, '');
+                if (!token) continue;
+
+                if (/^https?:\/\//i.test(token)) {
+                    urls.push(token);
+                } else if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(:\d+)?(\/.*)?$/i.test(token)) {
+                    urls.push('https://' + token);
+                }
+            }
+            return urls;
+        }
+
+        // Intelligent Video Link Parsing
+        function parseMovieLink(url) {
+            try {
+                const decodedUrl = decodeURI(url);
+                const urlParts = decodedUrl.split(/[\\/]/).filter(Boolean);
+                
+                const rawFileName = urlParts[urlParts.length - 1] || '';
+                const rawFolderName = urlParts.length > 1 ? urlParts[urlParts.length - 2] : '';
+
+                // Strip standard video extension (.mp4, .mkv, .ts, etc.)
+                let baseFileName = rawFileName.replace(/\.(mp4|mkv|avi|mov|ts|m3u8|webm|flv|wmv)(\?.*)?$/i, '');
+
+                // 1. Season & Episode match (S01E02, 1x02, Season 1 Episode 2)
+                const epMatch = baseFileName.match(/^(.*?)(?:[\s._-]+)?([sS]\d{1,2}\s?[eE]\d{1,2}|\d{1,2}x\d{1,2})(.*)?$/i);
+                if (epMatch) {
+                    let seriesName = (epMatch[1] || rawFolderName).replace(/[-_.]+/g, ' ').trim();
+                    let epCode = epMatch[2].toUpperCase().replace(/\s+/g, '');
+                    let extraTitle = (epMatch[3] || '').replace(/(\[.*?\]|\(.*?\))/g, '').replace(/[-_.]+/g, ' ').trim();
+
+                    let cleanTitle = `${seriesName} ${epCode}`;
+                    if (extraTitle) cleanTitle += ` - ${extraTitle}`;
+
+                    const folderUrl = url.substring(0, url.lastIndexOf('/') + 1);
+                    return {
+                        title: cleanTitle.trim(),
+                        videoUrl: url,
+                        imageUrl: `${folderUrl}poster.jpg`
+                    };
+                }
+
+                // 2. Movie with release year (e.g. Inception 2010 or Avatar (2009))
+                const yearMatch = (rawFolderName + ' ' + baseFileName).match(/([a-zA-Z0-9\s._'-]+?)(?:\s*\(?(\b(?:19|20)\d{2}\b)\)?)/i);
+                if (yearMatch && yearMatch[1]) {
+                    const cleanName = yearMatch[1].replace(/[-_.]+/g, ' ').trim();
+                    const year = yearMatch[2];
+                    const folderUrl = url.substring(0, url.lastIndexOf('/') + 1);
+                    return {
+                        title: `${cleanName} (${year})`,
+                        videoUrl: url,
+                        imageUrl: `${folderUrl}poster.jpg`
+                    };
+                }
+
+                // 3. Fallback: sanitize release garbage tags
+                let cleanTitle = baseFileName
+                    .replace(/(\[.*?\]|\(.*?\))/g, '')
+                    .replace(/\b(1080p|720p|2160p|4k|uhd|webrip|web-dl|bluray|x264|x265|hevc|aac|dts|h264|repack|proper|esub|hindi|english)\b.*/i, '')
+                    .replace(/[-_.]+/g, ' ')
+                    .trim();
+
+                const folderUrl = url.substring(0, url.lastIndexOf('/') + 1);
+                return {
+                    title: cleanTitle || rawFileName || 'Track Item',
+                    videoUrl: url,
+                    imageUrl: `${folderUrl}poster.jpg`
+                };
+            } catch (err) {
+                return {
+                    title: 'Media Stream',
+                    videoUrl: url,
+                    imageUrl: ''
+                };
+            }
+        }
+
+        // Create Playlist DOM Element
+        function createPlaylistItemElement(data) {
+            const item = document.createElement('div');
+            item.className = 'playlist-item';
+            item.setAttribute('draggable', 'true');
+            item.setAttribute('role', 'listitem');
+
+            item.dataset.title = data.title;
+            item.dataset.videoUrl = data.videoUrl;
+            item.dataset.imageUrl = data.imageUrl || '';
+
+            item.innerHTML = `
+                <div class="item-actions-left">
+                    <div class="drag-handle" title="Drag to reorder" aria-label="Drag to reorder">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+                    </div>
+                    <div class="reorder-btns">
+                        <button type="button" class="btn-order btn-move-up" title="Move Up" aria-label="Move Up">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <button type="button" class="btn-order btn-move-down" title="Move Down" aria-label="Move Down">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="item-info">
+                    <div class="item-title-row">
+                        <span class="item-title editable" title="Click to edit title">${escapeHtml(data.title)}</span>
+                    </div>
+                    <div class="item-url" title="${escapeHtml(data.videoUrl)}">${escapeHtml(data.videoUrl)}</div>
+                </div>
+                <div class="item-actions-right">
+                    <button type="button" class="icon-btn btn-edit" title="Rename" aria-label="Rename">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    </button>
+                    <button type="button" class="icon-btn delete-btn" title="Remove" aria-label="Remove">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+
+            attachItemDragEvents(item);
+            return item;
+        }
+
+        // HTML escaping utility for safe rendering
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Drag & Drop for Items (Desktop & Touch)
+        function attachItemDragEvents(item) {
+            item.addEventListener('dragstart', (e) => {
+                draggedItem = item;
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', item.dataset.title);
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                draggedItem = null;
+                document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('drag-target'));
+                updateReorderButtons();
+            });
+
+            // Touch support for reordering handles
+            const dragHandle = item.querySelector('.drag-handle');
+            let touchStartY = 0;
+            let currentTouchTarget = null;
+
+            dragHandle.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+                draggedItem = item;
+                item.classList.add('dragging');
+            }, { passive: true });
+
+            dragHandle.addEventListener('touchmove', (e) => {
+                if (!draggedItem) return;
+                const touchY = e.touches[0].clientY;
+                const elementUnderTouch = document.elementFromPoint(e.touches[0].clientX, touchY);
+                const targetRow = elementUnderTouch ? elementUnderTouch.closest('.playlist-item') : null;
+
+                if (targetRow && targetRow !== draggedItem) {
+                    currentTouchTarget = targetRow;
+                    const box = targetRow.getBoundingClientRect();
+                    if (touchY > box.top + box.height / 2) {
+                        targetRow.after(draggedItem);
+                    } else {
+                        targetRow.before(draggedItem);
+                    }
+                }
+            }, { passive: true });
+
+            dragHandle.addEventListener('touchend', () => {
+                if (draggedItem) {
+                    draggedItem.classList.remove('dragging');
+                    draggedItem = null;
+                    updateReorderButtons();
+                }
+            });
+        }
+
+        // List Container Drag Over
+        playlistItems.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (!draggedItem) return;
+
+            const targetItem = e.target.closest('.playlist-item');
+            if (targetItem && targetItem !== draggedItem) {
+                const box = targetItem.getBoundingClientRect();
+                const next = (e.clientY - box.top) / (box.bottom - box.top) > 0.5;
+                playlistItems.insertBefore(draggedItem, next ? targetItem.nextSibling : targetItem);
+            }
+        });
+
+        // Event Delegation for Playlist Actions (Move Up, Move Down, Edit, Delete)
+        playlistItems.addEventListener('click', (e) => {
+            const item = e.target.closest('.playlist-item');
+            if (!item) return;
+
+            // Delete Action
+            if (e.target.closest('.delete-btn')) {
+                item.style.transform = 'scale(0.9)';
+                item.style.opacity = '0';
+                item.style.transition = 'all 0.18s ease';
+                setTimeout(() => {
+                    item.remove();
+                    updateUIState();
+                    showToast('Track removed', 'info', 1800);
+                }, 180);
+                return;
+            }
+
+            // Move Up
+            if (e.target.closest('.btn-move-up')) {
+                const prev = item.previousElementSibling;
+                if (prev) {
+                    playlistItems.insertBefore(item, prev);
+                    updateReorderButtons();
+                }
+                return;
+            }
+
+            // Move Down
+            if (e.target.closest('.btn-move-down')) {
+                const next = item.nextElementSibling;
+                if (next) {
+                    playlistItems.insertBefore(next, item);
+                    updateReorderButtons();
+                }
+                return;
+            }
+
+            // Edit Title Action
+            if (e.target.closest('.btn-edit') || e.target.classList.contains('editable')) {
+                beginEditingTitle(item);
+                return;
+            }
+        });
+
+        // Title Inline Editing
+        function beginEditingTitle(item) {
+            const titleSpan = item.querySelector('.item-title');
+            if (item.querySelector('.title-edit-input')) return; // Already editing
+
+            const currentTitle = item.dataset.title;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'title-edit-input';
+            input.value = currentTitle;
+
+            titleSpan.replaceWith(input);
+            input.focus();
+            input.select();
+
+            function save() {
+                const newTitle = input.value.trim() || currentTitle;
+                item.dataset.title = newTitle;
+                const newSpan = document.createElement('span');
+                newSpan.className = 'item-title editable';
+                newSpan.title = 'Click to edit title';
+                newSpan.textContent = newTitle;
+                input.replaceWith(newSpan);
+            }
+
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', (evt) => {
+                if (evt.key === 'Enter') {
+                    input.blur();
+                } else if (evt.key === 'Escape') {
+                    input.value = currentTitle;
+                    input.blur();
+                }
+            });
+        }
+
+        // Process Links from Textarea with Duplicate Detection & Notification
+        function processLinks() {
+            const textContent = linksEditor.value.trim();
+            if (!textContent) {
+                showToast('Please paste at least one video link.', 'error');
+                linksEditor.focus();
+                return;
+            }
+
+            const urls = extractUrls(textContent);
+            if (urls.length === 0) {
+                showToast('No valid URLs found. Make sure links start with http:// or https://', 'error');
+                return;
+            }
+
+            // Map of existing items by normalized URL for lookup & highlight
+            const existingMap = new Map();
+            playlistItems.querySelectorAll('.playlist-item').forEach(item => {
+                const norm = normalizeUrl(item.dataset.videoUrl);
+                if (norm && !existingMap.has(norm)) {
+                    existingMap.set(norm, item);
+                }
+            });
+
+            const toAdd = [];
+            const duplicates = [];
+            const batchSeen = new Set();
+            let firstDuplicateEl = null;
+
+            urls.forEach(url => {
+                const norm = normalizeUrl(url);
+                if (existingMap.has(norm)) {
+                    duplicates.push(url);
+                    if (!firstDuplicateEl) {
+                        firstDuplicateEl = existingMap.get(norm);
+                    }
+                } else if (batchSeen.has(norm)) {
+                    duplicates.push(url);
+                } else {
+                    batchSeen.add(norm);
+                    toAdd.push(url);
+                }
+            });
+
+            // Highlight the duplicate in the playlist if already present
+            if (firstDuplicateEl) {
+                highlightExistingItem(firstDuplicateEl);
+            }
+
+            if (toAdd.length > 0) {
+                const fragment = document.createDocumentFragment();
+                toAdd.forEach(url => {
+                    const entry = parseMovieLink(url);
+                    const el = createPlaylistItemElement(entry);
+                    fragment.appendChild(el);
+                });
+
+                playlistItems.appendChild(fragment);
+                linksEditor.value = '';
+                updateLinkHint();
+                updateUIState();
+
+                if (duplicates.length > 0) {
+                    showToast(`Added ${toAdd.length} track${toAdd.length === 1 ? '' : 's'}. Skipped ${duplicates.length} duplicate link${duplicates.length === 1 ? '' : 's'}.`, 'info', 4000);
+                } else {
+                    showToast(`Added ${toAdd.length} track${toAdd.length === 1 ? '' : 's'} to playlist!`, 'success');
+                }
+            } else {
+                // All provided links were duplicates
+                if (duplicates.length === 1) {
+                    showToast('This link already exists in your playlist.', 'error', 3500);
+                } else {
+                    showToast(`All ${duplicates.length} links already exist in your playlist.`, 'error', 3500);
+                }
+            }
+        }
+
+        btnAddLinks.addEventListener('click', processLinks);
+
+        // Keyboard Shortcut: Ctrl/Cmd + Enter to add links, Enter for paragraph spacing
+        linksEditor.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                processLinks();
+                return;
+            }
+
+            // Normal Enter creates a double line break for clean spacing between each link
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                const start = linksEditor.selectionStart;
+                const end = linksEditor.selectionEnd;
+                const val = linksEditor.value;
+
+                const insertText = '\n\n';
+                linksEditor.value = val.slice(0, start) + insertText + val.slice(end);
+                linksEditor.setSelectionRange(start + 2, start + 2);
+                updateLinkHint();
+            }
+        });
+
+        // Paste listener: automatically separates multiple links with a line break and paragraph space
+        linksEditor.addEventListener('paste', (e) => {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            const rawPasted = clipboardData.getData('text/plain');
+            if (!rawPasted) return;
+
+            const urls = extractUrls(rawPasted);
+            if (urls.length > 0) {
+                e.preventDefault();
+
+                // Format each link with an empty line space between them
+                const formatted = urls.join('\n\n');
+
+                const start = linksEditor.selectionStart;
+                const end = linksEditor.selectionEnd;
+                const val = linksEditor.value;
+
+                let prefix = '';
+                let suffix = '';
+
+                if (start > 0) {
+                    const before = val.slice(0, start);
+                    if (!before.endsWith('\n\n')) {
+                        prefix = before.endsWith('\n') ? '\n' : '\n\n';
+                    }
+                }
+
+                if (end < val.length) {
+                    const after = val.slice(end);
+                    if (!after.startsWith('\n\n')) {
+                        suffix = after.startsWith('\n') ? '\n' : '\n\n';
+                    }
+                }
+
+                const replacement = prefix + formatted + suffix;
+                linksEditor.value = val.slice(0, start) + replacement + val.slice(end);
+
+                const newCursor = start + replacement.length;
+                linksEditor.setSelectionRange(newCursor, newCursor);
+
+                updateLinkHint();
+            }
+        });
+
+        // File Drag & Drop on the Textarea
+        ['dragenter', 'dragover'].forEach(name => {
+            linksEditor.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                linksEditor.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'dragend'].forEach(name => {
+            linksEditor.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                linksEditor.classList.remove('dragover');
+            });
+        });
+
+        linksEditor.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            linksEditor.classList.remove('dragover');
+
+            const dt = e.dataTransfer;
+            
+            // Check for dropped files
+            if (dt.files && dt.files.length > 0) {
+                readAndParsePlaylistFile(dt.files[0]);
+                return;
+            }
+
+            // Dropped text / URLs
+            const droppedText = dt.getData('text/uri-list') || dt.getData('text/plain') || '';
+            if (droppedText) {
+                const urls = extractUrls(droppedText);
+                if (urls.length > 0) {
+                    const formatted = urls.join('\n\n');
+                    const existing = linksEditor.value.trim();
+                    linksEditor.value = existing ? existing + '\n\n' + formatted : formatted;
+                } else {
+                    const existing = linksEditor.value.trim();
+                    linksEditor.value = existing ? existing + '\n\n' + droppedText : droppedText;
+                }
+                updateLinkHint();
+            }
+        });
+
+        // File Open & Parsing
+        btnOpenFile.addEventListener('click', () => playlistFileInput.click());
+
+        playlistFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                readAndParsePlaylistFile(file);
+                playlistFileInput.value = '';
+            }
+        });
+
+        function readAndParsePlaylistFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const content = evt.target.result;
+                    const parsed = parseM3uContent(content);
+
+                    if (parsed.items.length === 0) {
+                        showToast('No playable media links found in file.', 'error');
+                        return;
+                    }
+
+                    playlistItems.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
+                    parsed.items.forEach(item => {
+                        fragment.appendChild(createPlaylistItemElement(item));
+                    });
+                    playlistItems.appendChild(fragment);
+
+                    if (parsed.playlistName) {
+                        playlistNameInput.value = parsed.playlistName;
+                    } else {
+                        const base = file.name.replace(/\.[^/.]+$/, '').replace(/[-_.]+/g, ' ').trim();
+                        playlistNameInput.value = base;
+                    }
+
+                    updateUIState();
+                    showToast(`Imported ${parsed.items.length} tracks successfully!`, 'success');
+                } catch (err) {
+                    showToast('Failed to parse the playlist file.', 'error');
+                }
+            };
+            reader.onerror = () => showToast('Error reading the file.', 'error');
+            reader.readAsText(file);
+        }
+
+        // Robust M3U Parser with Duplicate Filtering
+        function parseM3uContent(content) {
+            const lines = content.split(/\r?\n/);
+            const results = [];
+            const seenUrls = new Set();
+            let detectedName = '';
+            let pendingTitle = '';
+            let pendingLogo = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                if (line.startsWith('#PLAYLIST:')) {
+                    detectedName = line.replace('#PLAYLIST:', '').trim();
+                } else if (line.startsWith('#EXTINF:')) {
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/i);
+                    if (logoMatch) pendingLogo = logoMatch[1];
+
+                    const commaIdx = line.indexOf(',');
+                    if (commaIdx !== -1) {
+                        pendingTitle = line.substring(commaIdx + 1).trim();
+                    }
+                } else if (line.startsWith('#EXTVLCOPT:meta-albumarturl=')) {
+                    if (!pendingLogo) {
+                        pendingLogo = line.replace('#EXTVLCOPT:meta-albumarturl=', '').trim();
+                    }
+                } else if (/^https?:\/\//i.test(line)) {
+                    const norm = normalizeUrl(line);
+                    if (!seenUrls.has(norm)) {
+                        seenUrls.add(norm);
+                        const guessed = parseMovieLink(line);
+                        results.push({
+                            title: pendingTitle || guessed.title,
+                            videoUrl: line,
+                            imageUrl: pendingLogo || guessed.imageUrl
+                        });
+                    }
+                    pendingTitle = '';
+                    pendingLogo = '';
+                }
+            }
+
+            return { playlistName: detectedName, items: results };
+        }
+
+        // Reorder Button States (Disable top move-up and bottom move-down)
+        function updateReorderButtons() {
+            const items = playlistItems.querySelectorAll('.playlist-item');
+            items.forEach((item, index) => {
+                const upBtn = item.querySelector('.btn-move-up');
+                const downBtn = item.querySelector('.btn-move-down');
+                if (upBtn) upBtn.disabled = (index === 0);
+                if (downBtn) downBtn.disabled = (index === items.length - 1);
+            });
+        }
+
+        // Live validation for playlist name
+        playlistNameInput.addEventListener('input', () => {
+            validateDownloadState();
+        });
+
+        function validateDownloadState() {
+            const hasItems = playlistItems.children.length > 0;
+            const nameVal = playlistNameInput.value.trim();
+
+            if (nameVal.length > 0) {
+                playlistNameInput.classList.remove('error');
+            }
+
+            downloadBtn.disabled = !hasItems || nameVal.length === 0;
+        }
+
+        // Overall UI Sync
+        function updateUIState() {
+            const count = playlistItems.children.length;
+            const hasItems = count > 0;
+
+            playlistWrapper.style.display = hasItems ? 'block' : 'none';
+            playlistNameGroup.style.display = hasItems ? 'block' : 'none';
+            downloadBtn.style.display = hasItems ? 'inline-flex' : 'none';
+            playlistCount.textContent = count;
+
+            updateReorderButtons();
+            validateDownloadState();
+        }
+
+        // Clear All Dialog
+        btnClearAll.addEventListener('click', () => {
+            confirmModal.classList.add('active');
+        });
+
+        modalCancelBtn.addEventListener('click', () => {
+            confirmModal.classList.remove('active');
+        });
+
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) {
+                confirmModal.classList.remove('active');
+            }
+        });
+
+        modalConfirmBtn.addEventListener('click', () => {
+            playlistItems.innerHTML = '';
+            playlistNameInput.value = '';
+            confirmModal.classList.remove('active');
+            updateUIState();
+            showToast('Playlist cleared', 'info');
+        });
+
+        // Download M3U8 Generator
+        downloadBtn.addEventListener('click', () => {
+            const playlistName = playlistNameInput.value.trim();
+            if (!playlistName) {
+                playlistNameInput.classList.add('error');
+                playlistNameInput.focus();
+                showToast('Please enter a playlist name first.', 'error');
+                return;
+            }
+
+            const items = playlistItems.querySelectorAll('.playlist-item');
+            if (items.length === 0) {
+                showToast('No tracks to export.', 'error');
+                return;
+            }
+
+            let fileContent = `#EXTM3U\n#PLAYLIST:${playlistName}\n\n`;
+
+            items.forEach(item => {
+                const title = item.dataset.title;
+                const videoUrl = item.dataset.videoUrl;
+                const imageUrl = item.dataset.imageUrl;
+
+                if (imageUrl) {
+                    fileContent += `#EXTINF:-1 tvg-logo="${imageUrl}",${title}\n`;
+                    fileContent += `#EXTVLCOPT:meta-albumarturl=${imageUrl}\n`;
+                } else {
+                    fileContent += `#EXTINF:-1,${title}\n`;
+                }
+                fileContent += `${videoUrl}\n\n`;
+            });
+
+            const safeName = playlistName.replace(/[/\\?%*:|"<>]/g, '_').trim() || 'playlist';
+            const blob = new Blob([fileContent], { type: 'audio/x-mpegurl;charset=utf-8' });
+            const downloadUrl = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+
+            anchor.href = downloadUrl;
+            anchor.download = `${safeName}.m3u8`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+            showToast(`Downloaded ${safeName}.m3u8`, 'success');
+        });
+
+    })();
+</script>
+
+</body>
+</html>
